@@ -137,6 +137,7 @@ def on_message(client, userdata, msg):
     global user
     #print("topic: "+msg.topic)
 
+    # Topic velocità
     if msg.topic == 'NP_RELAB_VD':
         s = json.loads(str(msg.payload.decode("utf-8")))
         timestamp_relab = s['VehicleDynamics']['timestamp']
@@ -144,6 +145,8 @@ def on_message(client, userdata, msg):
         speed_buffer.append(s['VehicleDynamics']['speed']['x'])
 
         #flagV = True
+
+    # Topic distrazione cognitiva e visuale
     elif msg.topic == 'NP_UNITO_DCDC':
         try:
             if len(str(msg.payload.decode('utf-8'))) == 0:
@@ -151,6 +154,7 @@ def on_message(client, userdata, msg):
             else:
                 D = json.loads(str(msg.payload.decode("utf-8")))
 
+                # Distrazione cognitiva
                 cd = D['cognitive_distraction'] if D['cognitive_distraction_confidence'] != 0 else 0.0
                 if D['cognitive_distraction_confidence'] == 0.0:
                     logger_client_error.warning({
@@ -160,6 +164,7 @@ def on_message(client, userdata, msg):
                     })
                     print('NO cognitive distraction value')
 
+                # Distrazione visuale
                 vd = D['eyesOffRoad'] if D['eyesOffRoad_confidence'] != 0.0 else 0.0
                 if D['eyesOffRoad_confidence'] == 0.0:
                     logger_client_error.warning({
@@ -173,12 +178,14 @@ def on_message(client, userdata, msg):
             vd = 0.0
             print(exception)
 
+        # Calcolo DCi e DVi. In formula cd e vd sono bool
         speed_mean = np.mean(speed_buffer)
         DCi = round(cd * speed_mean/threshold_v * weight **(IDC - threshold_i_c), decimals)
         DVi = round(vd * speed_mean/threshold_v * weight **(IDV - threshold_i_v), decimals)
 
         flagD = True
 
+    # Topic per emozioni
     elif msg.topic == 'Emotions':
         try:
             if len(str(msg.payload.decode('utf-8'))) == 0:
