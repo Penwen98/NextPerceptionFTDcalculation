@@ -95,7 +95,7 @@ s = 0 #speed value
 Ei = 0
 DCi = 0
 DVi = 0
-timestamp_relab=0;
+timestamp_relab = 0
 
 flagE = False
 flagD = False
@@ -114,6 +114,8 @@ surprise = 0
 cd = 0 #cognitive distraction value
 vd = 0 #visual distraction value
 
+arousal = 1
+
 anger_buffer = [0,0,0,0]
 happiness_buffer = [0,0,0,0]
 fear_buffer = [0,0,0,0]
@@ -123,6 +125,7 @@ disgust_buffer = [0,0,0,0]
 surprise_buffer = [0,0,0,0]
 speed_buffer = [0,0,0,0]
 
+arousal_buffer = [1, 1, 1, 1] # 1 arousal max, 0 arousal min
 
 user = ''
 
@@ -132,8 +135,8 @@ def on_subscribe(client, userdata, mid, granted_qos):
 
 def on_message(client, userdata, msg):
     global FTD, IDC, IDV, weight, decimals, threshold_v, threshold_i_v, threshold_i_c, DCi, DVi, s, Ei, flagD, flagE, flagV
-    global anger, happiness, fear, sadness, neutral, disgust, surprise, cd, vd 
-    global anger_buffer, happiness_buffer, fear_buffer, sadness_buffer, neutral_buffer, disgust_buffer, surprise_buffer, speed_buffer, timestamp_relab
+    global anger, happiness, fear, sadness, neutral, disgust, surprise, cd, vd, arousal
+    global anger_buffer, happiness_buffer, fear_buffer, sadness_buffer, neutral_buffer, disgust_buffer, surprise_buffer, speed_buffer, arousal_buffer, timestamp_relab
     global user
     #print("topic: "+msg.topic)
 
@@ -225,7 +228,15 @@ def on_message(client, userdata, msg):
         #emotions_total= Ei
     elif msg.topic == 'NP_UNIBO_FTD':
         FTD = json.loads(str(msg.payload.decode("utf-8")))['person0']['ftd']
-
+    
+    elif msg.topic == 'NP_UNIPR_AROUSAL':
+        data = json.loads(str(msg.payload.decode("utf-8")))
+        if "arousal" in data:
+            arousal_buffer.pop(0)
+            arousal_buffer.append(data['arousal'])
+            arousal = np.mean(arousal_buffer)
+    
+    
     if flagD: #flagE and flagD and flagV:
 
         anger = np.mean(anger_buffer)
@@ -238,7 +249,7 @@ def on_message(client, userdata, msg):
 
         emotions = pd.Series([anger, happiness, fear, sadness, neutral, disgust, surprise])
         
-        Ei =  round((emotions * weights_emozioni).sum() / weights_emozioni.sum(), decimals)
+        Ei =  round(((emotions * weights_emozioni).sum() / weights_emozioni.sum()) * arousal, decimals)
 
         ftd = {user:{
             'timestamp': timestamp_relab,
@@ -258,8 +269,9 @@ def on_message(client, userdata, msg):
                     'neutral': neutral,
                     'disgust': disgust,
                     'surprise': surprise
-            },     
-        'speed': np.mean(speed_buffer)
+            },
+            'arousal': arousal,
+            'speed': np.mean(speed_buffer)
         }
 
         logger_output.critical({
@@ -276,8 +288,9 @@ def on_message(client, userdata, msg):
                     'neutral': neutral,
                     'disgust': disgust,
                     'surprise': surprise
-            },     
-        'speed': np.mean(speed_buffer)
+            },
+            'arousal': arousal,
+            'speed': np.mean(speed_buffer)
         })
         
         #flagE = False
@@ -334,6 +347,7 @@ def main():
         client.subscribe('NP_UNITO_DCDC', qos=1)
         client.subscribe('Emotions', qos=1)
         client.subscribe('NP_RELAB_VD', qos=1)# Effective speed
+        client.subscribe('NP_UNIPR_AROUSAL', qos=1) # Arousal
         client.loop_forever()
     except Exception as exception:
         print('connect to client error')
