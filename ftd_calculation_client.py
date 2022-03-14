@@ -1,6 +1,6 @@
 #client bloccante: se tutte le operazioni sono sequenziali possiamo usare questo client single threaded.
 
-from asyncio.windows_events import NULL
+#from asyncio.windows_events import NULL
 import paho.mqtt.client as paho
 import pandas as pd
 import numpy as np
@@ -114,7 +114,7 @@ surprise = 0
 cd = 0 #cognitive distraction value
 vd = 0 #visual distraction value
 
-arousal = 1
+arousal = 0
 
 anger_buffer = [0,0,0,0]
 happiness_buffer = [0,0,0,0]
@@ -125,7 +125,7 @@ disgust_buffer = [0,0,0,0]
 surprise_buffer = [0,0,0,0]
 speed_buffer = [0,0,0,0]
 
-arousal_buffer = [1, 1, 1, 1] # 1 arousal max, 0 arousal min
+arousal_buffer = [0, 0, 0, 0] # 1 arousal max, 0 arousal min
 
 user = ''
 
