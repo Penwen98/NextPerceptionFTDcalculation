@@ -32,6 +32,8 @@ json_formatter = JsonFormatter(
 # second file logger
 logger_output, handler_output = None, None
 
+# event logger
+event_output, handler_event_output = None, None
 
 
 class BrokerNameException(Exception):
@@ -146,7 +148,6 @@ def on_message(client, userdata, msg):
         timestamp_relab = s['VehicleDynamics']['timestamp']
         speed_buffer.pop(0)
         speed_buffer.append(s['VehicleDynamics']['speed']['x'])
-
         #flagV = True
 
     # Topic distrazione cognitiva e visuale
@@ -236,8 +237,13 @@ def on_message(client, userdata, msg):
             arousal_buffer.append(data['arousal'])
             arousal = np.mean(arousal_buffer)
     
+    elif msg.topic == 'NP_EVENTS':
+        data = json.loads(str(msg.payload.decode("utf-8")))
+        if "event" in data and "timestamp" in data:
+            event_output.critical(data)
     
-    if flagD: #flagE and flagD and flagV:
+    
+    if True:#flagD: #flagE and flagD and flagV:
 
         anger = np.mean(anger_buffer)
         happiness = np.mean(happiness_buffer)
@@ -293,20 +299,36 @@ def on_message(client, userdata, msg):
             'speed': np.mean(speed_buffer)
         })
         
+        emotionToPrint = {
+                    'anger': anger,
+                    'happiness': happiness,
+                    'fear': fear,
+                    'sadness': sadness,
+                    'neutral': neutral,
+                    'disgust': disgust,
+                    'surprise': surprise
+            }
         #flagE = False
         flagD = False
         #flagV = False
         #FTDs.append(max(0, 1 - (DCi + DVi + Ei)))
+        # print()
+        # print('FTD =', max(0, 1 - (DCi + DVi + Ei)))
+        # print(f"speed = {np.mean(speed_buffer)}")
+        # print(f"Arousal = {arousal}")
+        # print(f"Emotions = {emotionToPrint}")
+        # print()
+
         print()
-        print('FTD =', max(0, 1 - (DCi + DVi + Ei)))
-        print()
+        print(ftd)
+        print(emotionToPrint)
     
         
         #TODO INSERT INTO DATABASE
         
 
 def main():
-    global user, logger_client_error, handler_client_error, logger_output, handler_output
+    global user, logger_client_error, handler_client_error, logger_output, handler_output, event_output, handler_event_output
     
     broker_name = None #'tools.lysis-iot.com'
     port = None #1883
@@ -324,8 +346,12 @@ def main():
             print(user)
             logger_client_error, handler_client_error = setup_logger('main_logger', user+'_client.log')
             handler_client_error.setFormatter(json_formatter)
+
             logger_output, handler_output = setup_logger('output_logger', user+'_result.log')
             handler_output.setFormatter(json_formatter)
+
+            event_output, handler_event_output = setup_logger('event_logger', user+'_event.log')
+            event_output.setFormatter(json_formatter)
             
 
             
@@ -348,6 +374,7 @@ def main():
         client.subscribe('Emotions', qos=1)
         client.subscribe('NP_RELAB_VD', qos=1)# Effective speed
         client.subscribe('NP_UNIPR_AROUSAL', qos=1) # Arousal
+        client.subscribe('NP_EVENTS', qos=1) # Simulator events e.g line invasion
         client.loop_forever()
     except Exception as exception:
         print('connect to client error')
