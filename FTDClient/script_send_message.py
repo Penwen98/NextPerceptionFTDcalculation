@@ -2,12 +2,13 @@ import random
 import paho.mqtt.client as paho
 import json
 
-import time
+import time, json
 
 
 
 decimals = 4
 
+start = 0
 
 for i in range(2):
     client = paho.Client()
@@ -39,26 +40,33 @@ for i in range(2):
             json.dumps({"arousal": 1})
         ]
         arousal = random.choice(arousal_topic)
-
-
+        client.publish('NP_UNIPR_AROUSAL',arousal)
         client.publish('Emotions', emotion)
-        client.publish('NP_RELAB_VD', speed)
-        client.publish('NP_UNIPR_AROUSAL', arousal)
-        #print(f"Emozioni: {emotion}")
-        #print(f"Velocità: {s}")
-        #print(f"Arousal: {arousal}")
+        client.publish('RL_VehicleDynamics', speed)
+
+
+        print(emotion)
+        print(arousal)
+        print(s)
 
     DC = random.randint(0, 1)
-    DV = random.randint(0, 1)
+    eyesOffRoad = random.randint(0, 1)
     confidence_value =[0.0, round(random.random(),1)]
-    D_topic = [
-        '',
-        '{"time": 123456, "eyesOffRoad": ' +str(DV)+',"cognitive_distraction":'+str(DC)+', "eyesOffRoad_confidence": '+str(random.choice(confidence_value))+',  "cognitive_distraction_confidence": '+str(random.choice(confidence_value))+', "eyesOffRoad_pred_1s": 0.0, "cognitive_distraction_pred_1s": 0.0 }'
-    ]
-    D = random.choice(D_topic)
-
+    DC_topic = ['','{"time": 123456, "eyesOffRoad": ' +str(eyesOffRoad)+',"cognitive_distraction":'+str(DC)+', "eyesOffRoad_confidence": '+str(random.choice(confidence_value))+',  "cognitive_distraction_confidence": '+str(random.choice(confidence_value))+', "eyesOffRoad_pred_1s": 0.0, "cognitive_distraction_pred_1s": 0.0 }']
+    D = random.choice(DC_topic)
     client.publish('NP_UNITO_DCDC', D)
-    print(f"D: {D}")
+    
+    DV = random.randint(0, 1)
+    if DV != start:
+        start = DV
+    DV_topic = '{"timestamp": "2022-04-11 16:52:26.123", "event": "reverse", "start": '+ str(bool(DV)).lower() + '}'
+
+    client.publish('AITEK_EVENTS', DV_topic)
+    print(DV_topic)
+
+    print(D)
+
     print()
+
 
     time.sleep(1)
