@@ -1,0 +1,6 @@
+[submodule "Emotion-detection"]
+	path = Emotion-detection
+	url = https://github.com/manuandru/Emotion-detection
+[submodule "fitbit-heart-rate-mqtt"]
+	path = fitbit-heart-rate-mqtt
+	url = https://github.com/manuandru/fitbit-heart-rate-mqtt
