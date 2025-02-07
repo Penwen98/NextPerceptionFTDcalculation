@@ -131,13 +131,13 @@ arousal_buffer = [0, 0, 0, 0]  # 1 arousal max, 0 arousal min
 user = ''
 
 UNITO_TOPIC = "NP_UNITO_DCDC"
-ARAUSAL_TOPIC = "NP_UNIPR_AROUSAL"
+AROUSAL_TOPIC = "NP_UNIPR_AROUSAL"
 FTD_TOPIC = "NP_UNIBO_FTD"
 EMOJI_TOPIC = "Emotions"
 RELAB_TOPIC = "RL_VehicleDynamics"
-RULEX_TOPIC = "DSS"
-AITEK_TOPIC = "AITEK_EVENTS"
-NP_EVENTS_TOPIC = "NP_EVENTS"
+#RULEX_TOPIC = "DSS"
+#AITEK_TOPIC = "AITEK_EVENTS"
+#NP_EVENTS_TOPIC = "NP_EVENTS"
 
 def on_subscribe(client, userdata, mid, granted_qos):
     print("Subscribed: "+str(mid)+" "+str(granted_qos))
@@ -153,7 +153,7 @@ def on_message(client, userdata, msg):
     global anger, happiness, fear, sadness, neutral, disgust, surprise, cd, vd , arousal
     global anger_buffer, happiness_buffer, fear_buffer, sadness_buffer, neutral_buffer, disgust_buffer, surprise_buffer, speed_buffer, timestamp_relab, arousal_buffer
     global user
-    global UNITO_TOPIC, AITEK_TOPIC, ARAUSAL_TOPIC, FTD_TOPIC, EMOJI_TOPIC, RELAB_TOPIC, RULEX_TOPIC
+    global UNITO_TOPIC, AITEK_TOPIC, AROUSAL_TOPIC, FTD_TOPIC, EMOJI_TOPIC, RELAB_TOPIC, RULEX_TOPIC
     #print("topic: "+msg.topic)
 
     if msg.topic == RELAB_TOPIC:
@@ -254,7 +254,7 @@ def on_message(client, userdata, msg):
         surprise_buffer.append(float(e['surprise']))
         #emotions_total= Ei
 
-    elif msg.topic == ARAUSAL_TOPIC:
+    elif msg.topic == AROUSAL_TOPIC:
 
         try:
             data = json.loads(str(msg.payload.decode("utf-8")))
@@ -386,7 +386,7 @@ def on_message(client, userdata, msg):
 
 def main():
     global user, logger_client_error, handler_client_error, logger_output, handler_output, logger_topic, handler_topic, event_output, handler_event_output
-    global UNITO_TOPIC, AITEK_TOPIC, ARAUSAL_TOPIC, FTD_TOPIC, EMOJI_TOPIC, RELAB_TOPIC, RULEX_TOPIC
+    global UNITO_TOPIC, AITEK_TOPIC, AROUSAL_TOPIC, FTD_TOPIC, EMOJI_TOPIC, RELAB_TOPIC, RULEX_TOPIC
 
     broker_name = None #'tools.lysis-iot.com'
     port = None #1883
@@ -438,7 +438,7 @@ def main():
         client.subscribe(AITEK_TOPIC, qos=1)
         client.subscribe(RELAB_TOPIC, qos=1)# Effective speed
         client.subscribe(FTD_TOPIC, qos=1)
-        client.subscribe(ARAUSAL_TOPIC, qos=1)  # Arousal
+        client.subscribe(AROUSAL_TOPIC, qos=1)  # Arousal
         client.subscribe(RULEX_TOPIC, qos=1)  #TODO
         client.loop_forever()
     except Exception as exception:
