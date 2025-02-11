@@ -92,8 +92,8 @@ weight_fear = 0.083
 weight_sadness = 0.083
 weight_neutral = 0
 weight_disgust = 0.042
-weight_sorprise = 0.042
-weights_emozioni = pd.Series([weight_anger, weight_happiness, weight_fear, weight_sadness, weight_neutral, weight_disgust, weight_sorprise])
+weight_surprise = 0.042
+weights_emozioni = pd.Series([weight_anger, weight_happiness, weight_fear, weight_sadness, weight_neutral, weight_disgust, weight_surprise])
 s = 0 #speed value
 Ei = 0
 DCi = 0
@@ -135,9 +135,11 @@ AROUSAL_TOPIC = "NP_UNIPR_AROUSAL"
 FTD_TOPIC = "NP_UNIBO_FTD"
 EMOJI_TOPIC = "Emotions"
 RELAB_TOPIC = "RL_VehicleDynamics"
-#RULEX_TOPIC = "DSS"
-#AITEK_TOPIC = "AITEK_EVENTS"
-#NP_EVENTS_TOPIC = "NP_EVENTS"
+DISTRACTION_TOPIC = "Distractions"
+
+RULEX_TOPIC = "DSS"
+AITEK_TOPIC = "AITEK_EVENTS"
+NP_EVENTS_TOPIC = "NP_EVENTS"
 
 def on_subscribe(client, userdata, mid, granted_qos):
     print("Subscribed: "+str(mid)+" "+str(granted_qos))
@@ -153,7 +155,7 @@ def on_message(client, userdata, msg):
     global anger, happiness, fear, sadness, neutral, disgust, surprise, cd, vd , arousal
     global anger_buffer, happiness_buffer, fear_buffer, sadness_buffer, neutral_buffer, disgust_buffer, surprise_buffer, speed_buffer, timestamp_relab, arousal_buffer
     global user
-    global UNITO_TOPIC, AITEK_TOPIC, AROUSAL_TOPIC, FTD_TOPIC, EMOJI_TOPIC, RELAB_TOPIC, RULEX_TOPIC
+    global UNITO_TOPIC, AITEK_TOPIC, AROUSAL_TOPIC, FTD_TOPIC, EMOJI_TOPIC, RELAB_TOPIC, RULEX_TOPIC, DISTRACTION_TOPIC
     #print("topic: "+msg.topic)
 
     if msg.topic == RELAB_TOPIC:
@@ -254,6 +256,27 @@ def on_message(client, userdata, msg):
         surprise_buffer.append(float(e['surprise']))
         #emotions_total= Ei
 
+    elif msg.topic == DISTRACTION_TOPIC:
+        try:
+            if len(str(msg.payload.decode('utf-8'))) == 0:
+                e = {"predominant" : "0","drinking":"0","brushing hair": "0","safe driving":"0","talking phone": "0","texting phone": "0"}
+                raise EmptyMessageException(topic=DISTRACTION_TOPIC)
+
+            if len(json.loads(str(msg.payload.decode("utf-8")))) == 0:
+                e = {"predominant" : "0","drinking":"0","brushing hair": "0","safe driving":"0","talking phone": "0","texting phone": "0"}
+                logger_client_error.warning({
+                    'timestamp_unibo': int(datetime.datetime.now().timestamp() * 1000),
+                    "topic": DISTRACTION_TOPIC,
+                    "msg": 'NO distraction value'
+                })
+                print('NO distraction value')
+            else:
+                logTopic(msg.topic, json.loads(str(msg.payload.decode("utf-8"))))
+                e = json.loads(str(msg.payload.decode("utf-8")))[user]
+        except Exception as exception:
+                print(exception)
+    
+    
     elif msg.topic == AROUSAL_TOPIC:
 
         try:
@@ -268,7 +291,8 @@ def on_message(client, userdata, msg):
                 })
                 print('NO arousal value')
             elif "arousal" in data:
-                arousal_value = data['arousal']
+                #arousal_value = data['arousal']
+                arousal_value = 0.5
                 if arousal_value < 0:
                     #case undefined value -> arousal value = -1
                     arousal_value = np.mean(arousal_buffer)
@@ -434,6 +458,7 @@ def main():
         client.connect(broker_name, port) 
         client.subscribe(UNITO_TOPIC, qos=1)
         client.subscribe(EMOJI_TOPIC, qos=1)
+        client.subscribe(DISTRACTION_TOPIC, qos=1)
         client.subscribe(NP_EVENTS_TOPIC, qos=1) # Simulator events e.g line invasion
         client.subscribe(AITEK_TOPIC, qos=1)
         client.subscribe(RELAB_TOPIC, qos=1)# Effective speed
