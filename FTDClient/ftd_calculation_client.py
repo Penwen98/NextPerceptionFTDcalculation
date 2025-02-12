@@ -128,6 +128,7 @@ surprise_buffer = [0,0,0,0]
 speed_buffer = [0,0,0,0]
 arousal_buffer = [0, 0, 0, 0]  # 1 arousal max, 0 arousal min
 
+
 user = ''
 
 UNITO_TOPIC = "NP_UNITO_DCDC"
@@ -275,6 +276,8 @@ def on_message(client, userdata, msg):
                 e = json.loads(str(msg.payload.decode("utf-8")))[user]
         except Exception as exception:
                 print(exception)
+
+        vd = 0 if e['safe driving'] > 0.8 else 1
     
     
     elif msg.topic == AROUSAL_TOPIC:
