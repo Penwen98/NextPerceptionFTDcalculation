@@ -6,6 +6,7 @@ import numpy as np
 import json
 import datetime
 import os
+import time
 
 from log_to_json import JsonFormatter
 import logging
@@ -18,6 +19,7 @@ def setup_logger(name, log_file, level=logging.INFO):
     logger = logging.getLogger(name)
     logger.setLevel(level)
     logger.addHandler(handler)
+
 
     return logger, handler
 
@@ -101,7 +103,7 @@ DVi = 0
 timestamp_relab=0;
 
 flagE = False
-flagD = False
+flagD = True
 flagV = False
 
 
@@ -239,7 +241,7 @@ def on_message(client, userdata, msg):
                 print(exception)
 
         #flagE = True
-
+        
         anger_buffer.pop(0)
         happiness_buffer.pop(0)
         fear_buffer.pop(0)
@@ -260,11 +262,11 @@ def on_message(client, userdata, msg):
     elif msg.topic == DISTRACTION_TOPIC:
         try:
             if len(str(msg.payload.decode('utf-8'))) == 0:
-                e = {"predominant" : "0","drinking":"0","brushing hair": "0","safe driving":"0","talking phone": "0","texting phone": "0"}
+                distr = {"predominant": "0","drinking": "0","brushing_hair": "0","safe_driving": "0","talking_phone": "0","texting_phone": "0"}
                 raise EmptyMessageException(topic=DISTRACTION_TOPIC)
 
             if len(json.loads(str(msg.payload.decode("utf-8")))) == 0:
-                e = {"predominant" : "0","drinking":"0","brushing hair": "0","safe driving":"0","talking phone": "0","texting phone": "0"}
+                distr = {"predominant": "0","drinking": "0","brushing_hair": "0","safe_driving": "0","talking_phone": "0","texting_phone": "0"}
                 logger_client_error.warning({
                     'timestamp_unibo': int(datetime.datetime.now().timestamp() * 1000),
                     "topic": DISTRACTION_TOPIC,
@@ -273,12 +275,11 @@ def on_message(client, userdata, msg):
                 print('NO distraction value')
             else:
                 logTopic(msg.topic, json.loads(str(msg.payload.decode("utf-8"))))
-                e = json.loads(str(msg.payload.decode("utf-8")))[user]
+                distr = json.loads(str(msg.payload.decode("utf-8")))[user]
         except Exception as exception:
                 print(exception)
 
-        vd = 0 if e['safe driving'] > 0.8 else 1
-    
+        vd = 0 if distr['safe_driving'] > 0.8 else 1
     
     elif msg.topic == AROUSAL_TOPIC:
 
@@ -341,8 +342,15 @@ def on_message(client, userdata, msg):
         surprise = np.mean(surprise_buffer)
 
         emotions = pd.Series([anger, happiness, fear, sadness, neutral, disgust, surprise])
-        
+        time.sleep(1)
         Ei =  round(((emotions * weights_emozioni).sum() / weights_emozioni.sum()) * arousal, decimals)
+        print("emotions ")
+        
+        print(emotions)
+        
+        print("weights ")
+        print(weights_emozioni)
+        print(arousal)
 
         if (vd):
             IDV +=1
@@ -400,23 +408,23 @@ def on_message(client, userdata, msg):
         })
         
         #flagE = False
-        flagD = False
+        #flagD = False
         #flagV = False
         #FTDs.append(max(0, 1 - (DCi + DVi + Ei)))
+        print('IDV =', IDV)
         print()
         print('FTD =', max(0, 1 - (DCi + DVi + Ei)))
         print()
     
         
         #TODO INSERT INTO DATABASE
-        
 
 def main():
     global user, logger_client_error, handler_client_error, logger_output, handler_output, logger_topic, handler_topic, event_output, handler_event_output
     global UNITO_TOPIC, AITEK_TOPIC, AROUSAL_TOPIC, FTD_TOPIC, EMOJI_TOPIC, RELAB_TOPIC, RULEX_TOPIC
 
-    broker_name = None #'tools.lysis-iot.com'
-    port = None #1883
+    broker_name = '192.168.1.105' #'tools.lysis-iot.com'
+    port = 1883 #1883
 
     try:
 
@@ -437,7 +445,7 @@ def main():
             handler_output.setFormatter(json_formatter)
             
             event_output, handler_event_output = setup_logger('event_logger', user+'_event.log')
-            event_output.setFormatter(json_formatter)
+            handler_event_output.setFormatter(json_formatter)
             
             logger_topic, handler_topic = setup_logger('topic_logger', user+'_topic_logger.log')
             handler_topic.setFormatter(json_formatter)
@@ -458,7 +466,7 @@ def main():
         client = paho.Client()
         client.on_subscribe = on_subscribe
         client.on_message = on_message
-        client.connect(broker_name, port) 
+        client.connect(broker_name, port)
         client.subscribe(UNITO_TOPIC, qos=1)
         client.subscribe(EMOJI_TOPIC, qos=1)
         client.subscribe(DISTRACTION_TOPIC, qos=1)
@@ -468,6 +476,7 @@ def main():
         client.subscribe(FTD_TOPIC, qos=1)
         client.subscribe(AROUSAL_TOPIC, qos=1)  # Arousal
         client.subscribe(RULEX_TOPIC, qos=1)  #TODO
+        
         client.loop_forever()
     except Exception as exception:
         print('connect to client error')
