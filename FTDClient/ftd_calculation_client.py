@@ -103,7 +103,7 @@ DVi = 0
 timestamp_relab=0;
 
 flagE = False
-flagD = True
+flagD = False
 flagV = False
 
 
@@ -137,7 +137,8 @@ UNITO_TOPIC = "NP_UNITO_DCDC"
 AROUSAL_TOPIC = "NP_UNIPR_AROUSAL"
 FTD_TOPIC = "NP_UNIBO_FTD"
 EMOJI_TOPIC = "Emotions"
-RELAB_TOPIC = "RL_VehicleDynamics"
+#RELAB_TOPIC = "RL_VehicleDynamics"
+RELAB_TOPIC = "NP_RELAB_VD"
 DISTRACTION_TOPIC = "Distractions"
 
 RULEX_TOPIC = "DSS"
@@ -171,6 +172,7 @@ def on_message(client, userdata, msg):
                 timestamp_relab = s['VehicleDynamics']['timestamp']
                 speed_buffer.pop(0)
                 speed_buffer.append(s['VehicleDynamics']['speed']['x'])
+                print("SPEED MSG " + str(s['VehicleDynamics']['speed']['x']))
 
         except Exception as exception:
             print(exception)
@@ -241,6 +243,7 @@ def on_message(client, userdata, msg):
                 print(exception)
 
         #flagE = True
+        flagD = True
         
         anger_buffer.pop(0)
         happiness_buffer.pop(0)
@@ -342,7 +345,7 @@ def on_message(client, userdata, msg):
         surprise = np.mean(surprise_buffer)
 
         emotions = pd.Series([anger, happiness, fear, sadness, neutral, disgust, surprise])
-        time.sleep(1)
+        #time.sleep(1)
         Ei =  round(((emotions * weights_emozioni).sum() / weights_emozioni.sum()) * arousal, decimals)
         print("emotions ")
         
@@ -357,6 +360,7 @@ def on_message(client, userdata, msg):
         else:
             IDV = 0 
         speed_mean = np.mean(speed_buffer)
+        print("speed mean " + str(speed_mean))
         DVi = round(vd * speed_mean/threshold_v * weight **(IDV - threshold_i_v), decimals)
 
         print(f"DCi = {DCi}, DVi = {DVi}, Ei = {Ei}")
@@ -408,7 +412,7 @@ def on_message(client, userdata, msg):
         })
         
         #flagE = False
-        #flagD = False
+        flagD = False
         #flagV = False
         #FTDs.append(max(0, 1 - (DCi + DVi + Ei)))
         print('IDV =', IDV)
