@@ -883,7 +883,7 @@ class MQTTClient:
 # ==============================================================================
 
 
-clientMQTT = MQTTClient("127.0.0.1", 1883, "NP_RELAB_VD", "NP_EVENTS")
+clientMQTT = MQTTClient("192.168.1.105", 1883, "NP_RELAB_VD", "NP_EVENTS")
 
 def main():
     argparser = argparse.ArgumentParser(

@@ -209,18 +209,18 @@ def on_message(client, userdata, msg):
 
         flagD = True
 
-    elif msg.topic == AITEK_TOPIC:
-        try:
-            if len(str(msg.payload.decode('utf-8'))) == 0:
-                raise EmptyMessageException(topic=AITEK_TOPIC)
-            else:
-                logTopic(msg.topic, json.loads(str(msg.payload.decode("utf-8"))))
-                D = json.loads(str(msg.payload.decode("utf-8")))
-                vd = 1 if D['start'] else 0
+    #elif msg.topic == AITEK_TOPIC:
+    #    try:
+    #        if len(str(msg.payload.decode('utf-8'))) == 0:
+    #            raise EmptyMessageException(topic=AITEK_TOPIC)
+    #        else:
+    #            logTopic(msg.topic, json.loads(str(msg.payload.decode("utf-8"))))
+    #            D = json.loads(str(msg.payload.decode("utf-8")))
+    #            vd = 1 if D['start'] else 0
 
-        except Exception as exception:
-            vd = 0
-            print(exception)
+    #    except Exception as exception:
+    #        vd = 0
+    #        print(exception)
 
     elif msg.topic == EMOJI_TOPIC:
         try:
